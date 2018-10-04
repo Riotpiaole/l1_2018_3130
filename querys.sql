@@ -24,7 +24,12 @@ select b.color from sailors s , reserves r , boats b
 select s.sname from sailors s , reserves r  where s.sid = r.rid;
 
 -- 8. what is that mean
-
+select s.sid, rating +1 as increments
+    from sailors s , reserves r1 , reserves r2
+where s.sid = r1.sid 
+    and s.sid = r2.sid 
+    and r1.day = r2.day 
+    and r1.bid != r2.bid;
 -- 9. 
 select s.age from sailors s where s.sname like '%b%' and length(s.sname) > 3;
 
