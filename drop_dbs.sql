@@ -1,3 +1,3 @@
-drop table Sailors;
-drop table Boats;
-drop table Reserves;
+delete FROM saliors;
+delete from boats;
+delete from reserves;
