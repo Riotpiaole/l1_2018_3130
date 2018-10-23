@@ -2,7 +2,7 @@
 
 ----
 
-## Question 2
+## Question 1
 
 * Create the database `Sailors`, `Boats` and `Reserves`. The code is provide below
 
@@ -29,7 +29,7 @@ create table Reserves(
 
 ```
 
-## Question2
+## Question 2
 
 * Populate the data base with huge numbers of data
 
