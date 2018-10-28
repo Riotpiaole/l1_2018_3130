@@ -1,7 +1,5 @@
 # Report on Team Lab
 
-----
-
 ## Question 1
 
 * Create the database `Sailors`, `Boats` and `Reserves`. The code is provide below
@@ -75,7 +73,7 @@ get_random_date(
       ```
 
 2. Given question Find the distinct names and ages of all sailors
-    * Query is `select distinct s.sname , s.age from sailors s;
+    * Query is `select distinct s.sname , s.age from sailors s;`
     * The evaluation plan
     * ```sql
         Seq Scan on sailors s  (cost=0.00..2.10 rows=110 width=9)
@@ -173,7 +171,7 @@ get_random_date(
             Filter: (((sname)::text ~~ '%b%'::text) AND (length((sname)::text) > 3))
       ```
 
-10.  Given question Find the names of sailors who have reserved a red or a green boat.
+10. Given question Find the names of sailors who have reserved a red or a green boat.
     * Query is
         ```sql
             select s.sname from
