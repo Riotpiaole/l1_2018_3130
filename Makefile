@@ -7,3 +7,6 @@ setup:
 
 drop:
 	psql -d csi3130_lab1 -a -f drop_dbs.sql
+
+entry:
+	psql -d csi3130_lab1

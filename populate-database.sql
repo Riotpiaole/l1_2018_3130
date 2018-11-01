@@ -9,12 +9,12 @@ RETURN random_date;END;
 $BODY$  LANGUAGE plpgsql
 
 insert into sailors select generate_series(1,110),
-(array['jack', 'Lubber','Bob','David'])[ceil(1 + random()*4)],
+(array['jack', 'Lubber','Bob','David'])[ceil(1 + random()*3)],
 ceil(random()*(20-1)+10),ceil(random()*(30-1)+20);
 
 insert into boats select generate_series(1,150),
-(array['jack hammer','crowd','baki','hand'])[1+ random()*4],
-(array['red','blue','green','orange'])[ceil(1+ random()*4)];
+(array['jack hammer','crowd','baki','hand'])[1+ random()*3],
+(array['red','blue','green','orange'])[ceil(1+ random()*3)];
 
 insert into reserves select
 generate_series(1,110),
