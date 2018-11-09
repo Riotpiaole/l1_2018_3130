@@ -1,6 +1,11 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 # Report on Team Lab
 
-## Question 1
+## Question A
 
 * Create the database `Sailors`, `Boats` and `Reserves`. The code is provide below
 
@@ -27,7 +32,7 @@ create table Reserves(
 
 ```
 
-## Question 2
+## Question B
 
 * Populate the data base with huge numbers of data
 
@@ -63,19 +68,29 @@ get_random_date(
 );
 ```
 
-## Question 3 and 4
+* For `access path of each query` is included in Question C and D
+
+## Query Questions
+
+* Following include
+    * `querys` from `question A`
+    * `evaluation plan` from `quesstion B`
+    * `access paths` from `question C`
+    * `index improvement` from `question D`
 
 1. Given question Find the names and ages of all sailors.
     * Query is `select s.age ,s.sname from sailors s;`
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
         Seq Scan on sailors s  (cost=0.00..2.10 rows=110 width=9)
       ```
+    * The `access path`
+        * ![query1](Picture1.png)
     * This would always require sequential search. This is already most optimized.
 
 2. Given question Find the distinct names and ages of all sailors
     * Query is `select distinct s.age , s.sname from sailors s;`
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
          Unique  (cost=5.83..6.93 rows=110 width=50)
             ->  Sort  (cost=5.83..6.10 rows=110 width=50)
@@ -83,32 +98,33 @@ get_random_date(
             ->  Seq Scan on sailors s  (cost=0.00..2.10 rows=110 width=50)
       ```
     * Instead optimizes on index we change the query to `group by` and change order of the `s.sname and s.age` since `s.sname` only have four types and `s.age` have 29 unique numbers.
-        * `select s.sname, s.age from sailors s group by s.sname , s.age`
-        * cost
-        ```sql
-            HashAggregate  (cost=2.65..2.94 rows=29 width=9)
-                Group Key: sname, age
-                ->  Seq Scan on sailors s  (cost=0.00..2.10 rows=110 width=9)
-        ```
+    * Add index should make no performance differences
+    * ![query2](Picture2.png)
 
 3. Given question Find all sailors with a rating above 7.
     * Query is `select * from sailors s where s.age > 7;`
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
         Seq Scan on sailors s  (cost=0.00..2.38 rows=110 width=17)
             Filter: (age > 7)
       ```
     * Since is range comparison `tree index` can improve the optimization
-    * `create index idx_sailors on sailors(age)`
+        * `create index idx_sailors on sailors(age)`
     * This is using the B+ tree property to retrieve range that is less than age.
     ```sql
         Index Scan on sailors s  (cost=0.00..1.12 rows=110 width=17)
             Filter: (age > 7)
     ```
+    * The `access path` of this query is
+        * ![query3](Picture3.png)
 
 4. Given question Find the names of sailors who have reserved boat number 103
-    * Query is `select s.sname from sailors s join reserves r on s.sid = r.sid where r.bid = 103;`
-    * The evaluation plan
+    * Query is
+        ```sql
+            select s.sname from sailors s join reserves r
+              on s.sid = r.sid where r.bid = 103;
+        ```
+    * The `evaluation plan`
     * ```sql
         Hash Join  (cost=2.39..4.91 rows=1 width=5)
             Hash Cond: (s.sid = r.sid)
@@ -131,10 +147,19 @@ get_random_date(
                     ->  Seq Scan on reserves r  (cost=0.00..2.38 rows=1 width=4)
                         Filter: (bid = 103)
       ```
+    * The `access path` of this query is
+        * ![query4](Picture4.png)
+
 
 5. Given question Find the names of sailors who have reserved a red boat
-    * Query is `select s.sname from sailors s , reserves r , boats b where s.sid  = r.sid and  r.bid = b.bid  and b.color = 'red';`
-    * The evaluation plan
+    * Query is
+    * ```sql
+        select s.sname from sailors s , reserves r , boats b
+            where s.sid  = r.sid
+            and  r.bid = b.bid
+            and b.color = 'red';
+        ```
+    * The `evaluation plan`
     * ```sql
         Nested Loop  (cost=3.03..5.56 rows=1 width=5)
             ->  Hash Join  (cost=2.89..5.29 rows=1 width=4)
@@ -164,10 +189,16 @@ get_random_date(
             ->  Index Scan using sailors_pkey on sailors s  (cost=0.14..0.27 rows=1 width=9)
                     Index Cond: (sid = r.sid)
       ```
+    * The `access path` of this query is
+        * ![query5](Picture5.png)
 
 6. Given question Find the colors of boats reserved by Lubber
-    * Query is `select b.color from sailors s , reserves r , boats b where s.sid = r.sid and s.sname = 'Lubber';`
-    * The evaluation plan
+    * Query is
+    ```sql
+        select b.color from sailors s , reserves r , boats b
+          where s.sid = r.sid and s.sname = 'Lubber';
+    ```
+    * The `evaluation plan`
     * ```sql
         Nested Loop  (cost=2.69..54.52 rows=3750 width=6)
         ->  Seq Scan on boats b  (cost=0.00..2.50 rows=150 width=6)
@@ -196,10 +227,12 @@ get_random_date(
                             ->  Seq Scan on sailors s  (cost=0.00..2.38 rows=25 width=4)
                                 Filter: ((sname)::text = 'Lubber'::text
       ```
+    * The `access path`
+        ![query6](Picture6.png)
 
 7. Given question Find the names of sailors who have reserved at least one boat
-    * Query is `select s.sname from sailors s , reserves r  where s.sid = r.sid;`
-    * The evaluation plan
+    * Query is `select s.sname from sailors s , reserves r where s.sid = r.sid;`
+    * The `evaluation plan`
     * ```sql
          Hash Join  (cost=3.48..5.87 rows=110 width=5)
             Hash Cond: (r.sid = s.sid)
@@ -207,6 +240,8 @@ get_random_date(
             ->  Hash  (cost=2.10..2.10 rows=110 width=9)
                     ->  Seq Scan on sailors s  (cost=0.00..2.10 rows=110 width=9)
       ```
+     * The access path is following
+        * ![query7](Picture7.png)
     * Since both sizes of the table are the same. There the aranagement of the loop wouldn't influences the result.
     * Creating index on joining would improve the performance
     * ```sql
@@ -221,6 +256,7 @@ get_random_date(
                     ->  Seq Scan on sailors s  (cost=0.00..2.10 rows=110 width=9)
       ```
 
+
 8. Given question
     * Query is
         ```sql
@@ -231,7 +267,7 @@ get_random_date(
                 and r1.day = r2.day
                 and r1.bid != r2.bid;
         ```
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
         Nested Loop  (cost=3.89..6.70 rows=1 width=8)
             ->  Hash Join  (cost=3.75..6.43 rows=1 width=8)
@@ -243,6 +279,8 @@ get_random_date(
             ->  Index Scan using sailors_pkey on sailors s  (cost=0.14..0.27 rows=1 width=8)
                     Index Cond: (sid = r1.sid)
       ```
+    * The `access path`
+        ![query8](Picture8.png)
     * We would add `hash index` on `bid` , `day` , and `sailors.rating`. Since we evaluate the query with dismatch with its day.
     * the inexs is
     * ```sql
@@ -262,13 +300,16 @@ get_random_date(
                     Index Cond: (sid = r1.sid)
       ```
 
+
 9. Given question Find the ages of sailors whose name begins and ends with B and has at least three characters
     * Query is `select s.age from sailors s where s.sname like '%b%' and length(s.sname) > 3;`
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
          Seq Scan on sailors s  (cost=0.00..2.93 rows=19 width=4)
             Filter: (((sname)::text ~~ '%b%'::text) AND (length((sname)::text) > 3))
       ```
+    * The `access path`
+        ![query9](Picture9.png)
     * Take on the query on filtering length of the `sname` sequenctial scan is faster.
     * In comparison adding `create index len_sname on sailors(length(sname));` only gives following performance
     * ```sql
@@ -285,7 +326,7 @@ get_random_date(
                         join boats b on r.bid = b.bid
                             where b.color = 'red' or b.color = 'green';
         ```
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
          Hash Join  (cost=6.39..9.15 rows=25 width=5)
             Hash Cond: (s.sid = r.sid)
@@ -298,6 +339,8 @@ get_random_date(
                                 ->  Seq Scan on boats b  (cost=0.00..3.25 rows=34 width=4)
                                     Filter: (((color)::text = 'red'::text) OR ((color)::text = 'green'::text))
       ```
+    * The access path is following
+        * ![query10](Picture10.png)
     * Creating `hash indexes` on `sid` and `bid` for joining. Inclusivly, adding `hash index` on boat's color.
     * ```sql
         create index sid_reserves on reserves using hash(sid);
@@ -328,7 +371,7 @@ get_random_date(
                             (b.color = 'green' and r.bid = b.bid)
                         );
         ```
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
        Hash Join  (cost=6.39..9.15 rows=25 width=5)
             Hash Cond: (s.sid = r.sid)
@@ -341,6 +384,8 @@ get_random_date(
                                 ->  Seq Scan on boats b  (cost=0.00..3.25 rows=34 width=4)
                                     Filter: (((color)::text = 'red'::text) OR ((color)::text = 'green'::text))
       ```
+    * The access path is following
+        * ![query11](Picture11.png)
     * Since there is multiple conditional statement. We will rearange into left joined clauses and CNF. the query became:
     * ```sql
         select s.sname from sailors s , reserves r , boats b
@@ -349,6 +394,12 @@ get_random_date(
                     and (b.color = 'red'
                             or b.color = 'green');
       ```
+    * Addding `tree index` on `boat.color` and `hash index` on `reserves.sid` and `sailors.sid` for joining
+        ```sql
+            create index sid_reserves on reserves using hash(sid);
+            create index bid_reserves on reserves using hash(bid);
+            create index color_boats on boats using hash(color);
+        ```
     * The performances
     * ```sql
         Hash Join  (cost=6.39..9.15 rows=25 width=5)
@@ -372,7 +423,7 @@ get_random_date(
                     and b.color = 'red'
                     and not (b.color = 'green');
         ```
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
          Nested Loop  (cost=3.41..5.93 rows=1 width=5)
             ->  Hash Join  (cost=3.26..5.66 rows=1 width=4)
@@ -384,12 +435,14 @@ get_random_date(
             ->  Index Scan using sailors_pkey on sailors s  (cost=0.14..0.27 rows=1 width=9)
                     Index Cond: (sid = r.sid)
       ```
+    * The access path is following
+        * ![query12](Picture12.png)
     * Create `hash index` in boat's color and reserves both `sid` and `rid`, since reserves has less sizes than **boats** , we should do indexed nested loop with boats.
     * Since boat's color is `red`, isn't green should also hold true
     * So indexes we used is
     * ```sql
         create index sid_reserves on reserves using hash(sid);
-        create index bid_reserves on reserves using hash(bid);
+        create index bid_reserves on reserves using hash(bid);v
         create index color_boat on boats using hash(color);
       ```
     * We would also changed the query to
@@ -418,7 +471,7 @@ get_random_date(
         select s.sid from sailors s , reserves r
             where s.sid = r.sid and (s.rating = 10 or r.bid = 124);
         ```
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
           Nested Loop  (cost=0.14..37.37 rows=1 width=4)
             ->  Index Scan using i_sailor on sailors s  (cost=0.14..13.79 rows=110 width=8)
@@ -426,6 +479,8 @@ get_random_date(
                     Index Cond: (sid = s.sid)
                     Filter: ((s.rating = 10) OR (bid = 124))
       ```
+    * The access path is following
+        * ![query13](Picture13.png)
     * Create hash index on `sailors.rating` and `reserves.bid`. Since bid on reserves is buildin default.
     * ```sql
         create index rating_sailors on sailors using hash(rating);
@@ -442,11 +497,15 @@ get_random_date(
           ```
 14. Given question Find the average age of all sailors.
     * Query is `select avg(s.age) from sailors s;`
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
         Aggregate  (cost=2.38..2.39 rows=1 width=32)
             ->  Seq Scan on sailors s  (cost=0.00..2.10 rows=110 width=4)
       ```
+    * The access path is following
+        * ![query14](Picture14.png)
+    * A index can be improvement is hash index
+        * `create index sailors_age using hash(sailors.age)`
     * Since `average` is an aggregate function, there is not thing more optimal than Seq Scan.
     * The performance is
     * ```sql
@@ -456,12 +515,14 @@ get_random_date(
 
 15. Given question Find the average age of sailors with a rating of 10
     * Query is `select avg(s.age) from sailors s where s.rating = 10;`
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
           Aggregate  (cost=2.38..2.39 rows=1 width=32)
             ->  Seq Scan on sailors s  (cost=0.00..2.38 rows=1 width=4)
                     Filter: (rating = 10)
       ```
+    * The access path is following
+        * ![query15](Picture15.png)
     * Since we retrieve the equality on rating. We create a hash index in sailors's index we can improve the performance. On computing the average the performance is better in sequential scan.
     * `create index rating_sailors on sailors(rating)`
     * ```sql
@@ -476,7 +537,7 @@ get_random_date(
             select s.sname , s.age from sailors  s where s.age in (
                 select max(s1.age) msa from sailors s1);
         ```
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
         Hash Join  (cost=0.30..2.73 rows=4 width=9)
             Hash Cond: (s.age = ($0))
@@ -489,6 +550,8 @@ get_random_date(
                                         Index Cond: (age IS NOT NULL)
 
       ```
+    * The access path is following
+        * ![query16](Picture16.png)
     * Since there is nested query, we can re-represent the query into `group by .. having`. With additional hash index on age for faster retrieval on group by clasues. On matching we perform sequence scan
     * ```sql
         select s.sname , s.age from sailors  s group by s.age , s.sname having s.age = max(s.age)
@@ -503,11 +566,13 @@ get_random_date(
 
 17. Given question Count the number of sailors
     * Query is `select count(s) from sailors s;`
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
          Aggregate  (cost=2.38..2.38 rows=1 width=8)
             ->  Seq Scan on sailors s  (cost=0.00..2.10 rows=110 width=41)
       ```
+    * The access path is following
+        * ![query17](Picture17.png)
     * We add no index on sailors. Since seuqential scan would be the most optimal. The following is the performance with index scanning.
     * ```sql
           GroupAggregate  (cost=10000000005.83..10000000007.22 rows=29 width=9)
@@ -519,11 +584,14 @@ get_random_date(
       ```
 18. Given question Count the number of different sailor names.
     * Query is `select  count( distinct (s.sname)) from sailors s;`
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
          Aggregate  (cost=2.38..2.38 rows=1 width=8)
             ->  Seq Scan on sailors s  (cost=0.00..2.10 rows=110 width=5)
       ```
+    * The access path is following
+        * ![query18](Picture18.png)
+    * There might be no improvemtn done in adding index
 
 19. Given question Find the age of the youngest sailor for each rating level.
     * Query is
@@ -532,7 +600,7 @@ get_random_date(
                 select min(s1.age) min_sa from sailors s1)
                 order by s.rating;
         ```
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
          Sort  (cost=2.77..2.78 rows=4 width=8)
             Sort Key: s.rating
@@ -546,6 +614,8 @@ get_random_date(
                                         ->  Index Only Scan using idx_sailor on sailors s1  (cost=0.14..14.07 rows=110 width=4)
                                             Index Cond: (age IS NOT NULL)
       ```
+    * The access path is following
+        * ![query19](Picture19.png)
     * we redo the query into `group by` and `having` to minimizes the selection clause.
     * The query is
     * ```sql
@@ -554,6 +624,7 @@ get_random_date(
                 s.age = min(s.age)
             order by  s.rating
       ```
+    * Add index made no impact on the cost.
     * The performance increase by remove additional limit hash join in th previous query.
     * ```sql
          Sort  (cost=3.92..3.99 rows=29 width=8)
@@ -564,6 +635,7 @@ get_random_date(
                     ->  Seq Scan on sailors s  (cost=0.00..2.10 rows=110 width=8)
       ```
 
+
 20. Given question Find the age of the youngest sailor who is eligible to vote (i.e., is at least 18 years old) for each rating level with at least two such sailors.
     * Query is
         ```sql
@@ -572,7 +644,7 @@ get_random_date(
                     where s.age >= 18 group by s.rating
                 having count(s.sid ) >= 2) as s2;
         ```
-    * The evaluation plan
+    * The `evaluation plan`
     * ```sql
          Subquery Scan on s2  (cost=2.92..3.30 rows=19 width=4)
             ->  HashAggregate  (cost=2.92..3.11 rows=19 width=8)
@@ -581,6 +653,8 @@ get_random_date(
                     ->  Seq Scan on sailors s  (cost=0.00..2.38 rows=110 width=8)
                         Filter: (age >= 18)
       ```
+    * The access path is following
+        * ![query20](Picture20.png)
     * Since the query is nest query. Such as subquery is un-needed.
     * Adding tree index on age would imrpove it.
         * `create index age_sailor on sailors(age)`
